@@ -61,6 +61,7 @@ class ProductController extends Controller
             $result['warranty']=' ';
             $result['status']=' ';
             $result['id']=0;
+             $result['productAttrArr'][0]['id']='';
             $result['productAttrArr'][0]['products_id']='';
             $result['productAttrArr'][0]['sku']='';
             $result['productAttrArr'][0]['attr_image']='';
@@ -168,6 +169,21 @@ class ProductController extends Controller
                'slug'=>'required|unique:products,slug,'.$request->post('id'),
                'attr_image.*'=>'mimes:jpg,jpeg,png'
         ]);
+                        $paidArr =$request->post('paid');
+                        $skuArr =$request->post('sku');
+                        $mrpArr =$request->post('mrp');
+                        $priceArr =$request->post('price');
+                        $qtyArr =$request->post('qty');
+                        $size_idArr =$request->post('size_id');
+                        $color_idArr =$request->post('color_id');
+                        foreach($skuArr as $key=>$val){
+                            $check=DB::table('products_attr')->where('sku','=',$skuArr[$key])->where('id','!=',$paidArr[$key])->get();
+                        if(isset($check[0])){
+                            $request->session()->flash('sku_error',$skuArr[$key].'sku already used');
+                            return redirect(request()->headers->get('referer'));
+                        }
+                        }
+         
         if($request->post('id')>0){
             $model=Product::find($request->post('id'));
             $msg="product updated";
@@ -202,6 +218,7 @@ class ProductController extends Controller
         $pid=$model->id;
         
                         //product attr start
+                         $paidArr =$request->post('paid');
                         $skuArr =$request->post('sku');
                         $mrpArr =$request->post('mrp');
                         $priceArr =$request->post('price');
@@ -224,8 +241,14 @@ class ProductController extends Controller
                         }else{
                                 $productAttrArr['color_id']=$color_idArr[$key];
                         }           
-                        
+                        if($paidArr[$key]!=''){
+                            DB::table('products_attr')->where(['id'=>$paidArr[$key]])->update( $productAttrArr);
+
+                        }
+                        else{
                             DB::table('products_attr')->insert( $productAttrArr);
+
+                        }
                         }          
                         // //product attr end
                              
